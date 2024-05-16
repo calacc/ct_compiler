@@ -4,6 +4,19 @@
 #include <string.h>
 #include <stdarg.h>
 
+void err(const char *fmt,...)
+{
+    va_list va;
+    va_start(va,fmt);
+    fprintf(stderr,"error: ");
+    vfprintf(stderr,fmt,va);
+    fputc('\n',stderr);
+    va_end(va);
+    exit(-1);
+}
+
+#define SAFEALLOC(var,Type) if((var=(Type*)malloc(sizeof(Type)))==NULL) err("not enough memory") ;
+
 enum{ID, END, CT_INT, CT_REAL, CT_CHAR, CT_STRING, ASSIGN, SEMICOLON, BREAK, CHAR, DOUBLE, ELSE,
      FOR, IF, INT, RETURN, STRUCT, VOID, WHILE, EQUALS, COMMA, LPAR, RPAR, LBRACKET,
      RBRACKET, LACC, RACC, ADD, SUB, MUL, DIV, DOT, AND, OR, NOT, NOTEQ, LESS, LESSEQ, GREATER, GREATEREQ}; // tokens codes
@@ -26,18 +39,7 @@ typedef struct _Token{
 
 Token *tokens=NULL, *lastToken=NULL;
 char *input_text;
-int line, current_index;
-
-void err(const char *fmt,...)
-{
-    va_list va;
-    va_start(va,fmt);
-    fprintf(stderr,"error: ");
-    vfprintf(stderr,fmt,va);
-    fputc('\n',stderr);
-    va_end(va);
-    exit(-1);
-}
+int line=0, current_index=0;
 
 void tkerr(const Token *tk,const char *fmt,...)
 {
@@ -52,18 +54,18 @@ void tkerr(const Token *tk,const char *fmt,...)
 
 void print_token(Token *start)
 {
-    if(start->code==2)
-        printf("%s -> %d\n", enum_values[start->code], start->i);
-    else if(start->code==4)
-        printf("%s -> '%c'\n", enum_values[start->code], start->i);
-    else if(start->code==0)
-        printf("%s -> %s\n", enum_values[start->code], start->text);
-    else if(start->code==3)
-        printf("%s -> %f\n", enum_values[start->code], start->r);
-    else if(start->code==5)
-        printf("%s -> %s\n", enum_values[start->code], start->text);
-    else
-        printf("%s \n", enum_values[start->code]);
+    // if(start->code==2)
+    //     printf("%s -> %d\n", enum_values[start->code], start->i);
+    // else if(start->code==4)
+    //     printf("%s -> '%c'\n", enum_values[start->code], start->i);
+    // else if(start->code==0)
+    //     printf("%s -> %s\n", enum_values[start->code], start->text);
+    // else if(start->code==3)
+    //     printf("%s -> %f\n", enum_values[start->code], start->r);
+    // else if(start->code==5)
+    //     printf("%s -> %s\n", enum_values[start->code], start->text);
+    // else
+    printf("%s \n", enum_values[start->code]);
 }
 
 void print_list()
@@ -75,8 +77,6 @@ void print_list()
         start=start->next;
     }
 }
-
-#define SAFEALLOC(var,Type) if((var=(Type*)malloc(sizeof(Type)))==NULL) { err("not enough memory");} ;
 
 Token *addTk(int code)
 {
@@ -366,7 +366,6 @@ int getNextToken()
                 {
                     tk=addTk(CT_INT);
                     tk->i=createInt(createString(starting_index, ending_index+1));
-                    int copy=tk->i;
                     return tk->code;
                 }
                 break;
@@ -459,7 +458,7 @@ int getNextToken()
                         current_index++;
                         ending_index++;
                     }
-                    state=10;
+                    state=11;
                 }
                 break;
             case 11:
@@ -487,7 +486,6 @@ int getNextToken()
                 {
                     tk=addTk(CT_REAL);
                     tk->r=createFloat(createString(starting_index, ending_index+1));
-                    int copy=tk->r;
                     return tk->code;
                 }
                 break;
@@ -563,7 +561,7 @@ int getNextToken()
                         else if(copy[2]=='0')
                             tk->i='\0';
                     }
-                    int copy_int=tk->i;
+                    free(copy);
                     return tk->code;
                 }
                 break;
@@ -620,7 +618,6 @@ int getNextToken()
                 {
                     tk=addTk(CT_STRING);
                     tk->text=createString(starting_index, ending_index+1);
-                    int copy=tk->r;
                     return tk->code;
                 }
                 break;
@@ -866,32 +863,4 @@ int getNextToken()
                 break;
         }
     }
-}
-
-void read_file(char *filename)
-{
-    FILE *file = fopen(filename, "r");
-    input_text = malloc(500 * sizeof(char));
-    char c;
-    int n=0;
-
-    while ((c = fgetc(file)) != EOF)
-    {
-        input_text[n++] = (char) c;
-    }
-    input_text[n] = '\0';
-
-    fclose(file);
-    
-}
-
-// Token* tokens;
-// char* input_text;
-Token * lexical_analysis()
-// int main()
-{
-    // read_file("9.txt");
-    while(getNextToken()!=1)
-        continue;
-    free(input_text);
 }
