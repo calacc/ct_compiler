@@ -23,6 +23,7 @@ void free_token_list(Token *start) {
 
 void read_file(char *filename)
 {
+    printf("%s", filename);
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         err("Failed to open file %s", filename);
@@ -59,7 +60,7 @@ void cleanup(void) {
 
 int main(int argc, char *argv[])
 {
-    read_file(argv[1]);
+    read_file("0.c");
 
     atexit(cleanup);
 
